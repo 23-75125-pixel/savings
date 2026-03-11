@@ -477,38 +477,74 @@
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 (function() {
+  // ═══════════════════════════════════════════════════════════
+  //  FIREBASE CONFIG — Replace these with your own values from
+  //  Firebase Console → Project Settings → Your apps → Config
+  // ═══════════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyBdT79Xmp-ht3MAwrGnkiaJCXtIzccC0TA",
+    authDomain: "capstone-c9182.firebaseapp.com",
+    databaseURL: "https://capstone-c9182-default-rtdb.firebaseio.com",
+    projectId: "capstone-c9182",
+    storageBucket: "capstone-c9182.firebasestorage.app",
+    messagingSenderId: "546629934140",
+    appId: "1:546629934140:web:dbf20cfd5980e616cfb739",
+    measurementId: "G-TS4T00HKY9"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const paymentsRef = db.ref('payments');
+
   const MEMBERS  = ['Lira', 'JP', 'Jomhar', 'Eloisa'];
   const SHORTS   = ['Lira', 'JP', 'Jomhar', 'Eloisa'];
   const DOTS     = ['mdot-lira','mdot-jp','mdot-jomhar','mdot-eloisa'];
   const CONTRIBUTION = 20;
   const VALID_DAYS = [0,2,3,4,6]; // sun, tue, wed, thu, sat
   const YEAR = 2026;
-  const KEY  = 'rotating2026_v2';
 
   let payments = {};
-  try { const s = localStorage.getItem(KEY); if (s) payments = JSON.parse(s) || {}; } catch(e){}
+  let currentMonth;
+  const todayDate = new Date();
+  currentMonth = todayDate.getFullYear() === YEAR ? todayDate.getMonth() : 0;
+
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
 
   function dk(y, m, d) {
     return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
   function isValid(date) { return VALID_DAYS.includes(date.getDay()); }
-  function save() { localStorage.setItem(KEY, JSON.stringify(payments)); }
 
-  // init missing
-  for (let m = 0; m < 12; m++) {
-    const days = new Date(YEAR, m+1, 0).getDate();
-    for (let d = 1; d <= days; d++) {
-      const dt = new Date(YEAR, m, d);
-      if (isValid(dt)) {
-        const k = dk(YEAR, m, d);
-        if (!Array.isArray(payments[k]) || payments[k].length !== 4)
-          payments[k] = [false,false,false,false];
+  // Save a single day's payment to Firebase
+  function saveDay(dateKey, arr) {
+    paymentsRef.child(dateKey).set(arr);
+  }
+
+  // Initialize all valid days that don't exist yet in Firebase
+  function initMissing() {
+    const updates = {};
+    for (let m = 0; m < 12; m++) {
+      const days = new Date(YEAR, m+1, 0).getDate();
+      for (let d = 1; d <= days; d++) {
+        const dt = new Date(YEAR, m, d);
+        if (isValid(dt)) {
+          const k = dk(YEAR, m, d);
+          if (!Array.isArray(payments[k]) || payments[k].length !== 4) {
+            payments[k] = [false,false,false,false];
+            updates[k] = [false,false,false,false];
+          }
+        }
       }
     }
+    if (Object.keys(updates).length > 0) {
+      paymentsRef.update(updates);
+    }
   }
-  save();
 
   function totals() {
     const s = [0,0,0,0]; let all = 0;
@@ -521,7 +557,7 @@
 
   function unpaidAlert() {
     const today = new Date();
-    if (today.getFullYear() !== YEAR) return `<div class="alert-strip"><strong>—</strong> out of range</div>`;
+    if (today.getFullYear() !== YEAR) return '<div class="alert-strip"><strong>\u2014</strong> out of range</div>';
     const items = [];
     for (let m = 0; m <= today.getMonth(); m++) {
       const max = m === today.getMonth() ? today.getDate() : new Date(YEAR, m+1, 0).getDate();
@@ -535,27 +571,27 @@
         if (up.length) items.push({ dt, up });
       }
     }
-    if (!items.length) return `<div class="alert-ok">all paid up to today</div>`;
+    if (!items.length) return '<div class="alert-ok">all paid up to today</div>';
     const recent = items.sort((a,b) => b.dt - a.dt).slice(0,4);
     const lines = recent.map(({dt, up}) => {
       const ds = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
-      return `<strong>${ds}</strong> — ${up.join(', ')}`;
-    }).join(' &ensp;·&ensp; ');
-    return `<div class="alert-strip" style="margin-bottom:2rem"><strong>Pending</strong> &nbsp; ${lines}</div>`;
+      return '<strong>' + ds + '</strong> \u2014 ' + up.join(', ');
+    }).join(' \u2003\u00b7\u2003 ');
+    return '<div class="alert-strip" style="margin-bottom:2rem"><strong>Pending</strong> \u00a0 ' + lines + '</div>';
   }
 
   function refreshDash() {
     const { s, all } = totals();
-    document.getElementById('totalLira').textContent   = `₱${s[0]}`;
-    document.getElementById('totalJp').textContent     = `₱${s[1]}`;
-    document.getElementById('totalJomhar').textContent = `₱${s[2]}`;
-    document.getElementById('totalEloisa').textContent = `₱${s[3]}`;
-    document.getElementById('grandTotal').textContent  = `₱${all}`;
+    document.getElementById('totalLira').textContent   = '\u20B1' + s[0];
+    document.getElementById('totalJp').textContent     = '\u20B1' + s[1];
+    document.getElementById('totalJomhar').textContent = '\u20B1' + s[2];
+    document.getElementById('totalEloisa').textContent = '\u20B1' + s[3];
+    document.getElementById('grandTotal').textContent  = '\u20B1' + all;
 
     const today = new Date();
     const is26  = today.getFullYear() === YEAR;
     if (!is26) {
-      document.getElementById('todayDate').textContent = '—';
+      document.getElementById('todayDate').textContent = '\u2014';
       document.getElementById('todayValidBadge').textContent = 'out of range';
       document.getElementById('memberTodayRow').innerHTML = '';
       document.getElementById('dashSummary').innerHTML = '';
@@ -584,22 +620,15 @@
       const sum    = document.getElementById('dashSummary');
       if (!validNow) { sum.innerHTML = ''; return; }
       sum.innerHTML = paid.length
-        ? `<span>${paid.join(', ')}</span> paid · ${unpaid.length ? unpaid.join(', ') + ' pending' : 'everyone in'}`
-        : `Members`;
+        ? '<span>' + paid.join(', ') + '</span> paid \u00b7 ' + (unpaid.length ? unpaid.join(', ') + ' pending' : 'everyone in')
+        : 'Members';
     }
 
     document.getElementById('unpaidAlertContainer').innerHTML = unpaidAlert();
   }
 
-  let currentMonth;
-  const today = new Date();
-  currentMonth = today.getFullYear() === YEAR ? today.getMonth() : 0;
-
-  const MONTHS = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-
   function renderCal(month) {
-    document.getElementById('currentMonthLabel').textContent = `${MONTHS[month]} 2026`;
+    document.getElementById('currentMonthLabel').textContent = MONTHS[month] + ' 2026';
     const firstDay = new Date(YEAR, month, 1).getDay();
     const daysIn   = new Date(YEAR, month+1, 0).getDate();
     const container = document.getElementById('monthCalendar');
@@ -621,7 +650,7 @@
       if (valid && !payments[k]) payments[k] = [false,false,false,false];
 
       const tile = document.createElement('div');
-      tile.className = `day-tile ${valid ? 'day-valid' : 'day-invalid'}`;
+      tile.className = 'day-tile ' + (valid ? 'day-valid' : 'day-invalid');
       if (isThisMonth && d === todayRef.getDate()) tile.classList.add('day-today');
 
       const num = document.createElement('div');
@@ -634,11 +663,11 @@
         row.className = 'checks-row';
         MEMBERS.forEach((name, idx) => {
           const lbl = document.createElement('label');
-          const isPaid = payments[k]?.[idx] || false;
-          lbl.className = `chk-label${isPaid ? ' checked' : ''}`;
+          const isPaid = payments[k] ? (payments[k][idx] || false) : false;
+          lbl.className = 'chk-label' + (isPaid ? ' checked' : '');
 
           const dot = document.createElement('span');
-          dot.className = `mdot ${DOTS[idx]}`;
+          dot.className = 'mdot ' + DOTS[idx];
           lbl.appendChild(dot);
 
           const chk = document.createElement('input');
@@ -647,8 +676,8 @@
           chk.addEventListener('change', function() {
             if (!payments[k]) payments[k] = [false,false,false,false];
             payments[k][idx] = this.checked;
-            lbl.className = `chk-label${this.checked ? ' checked' : ''}`;
-            save();
+            lbl.className = 'chk-label' + (this.checked ? ' checked' : '');
+            saveDay(k, payments[k]);
             refreshDash();
           });
           lbl.appendChild(chk);
@@ -659,24 +688,32 @@
       } else {
         const d2 = document.createElement('span');
         d2.className = 'invalid-dash';
-        d2.textContent = '—';
+        d2.textContent = '\u2014';
         tile.appendChild(d2);
       }
       container.appendChild(tile);
     }
   }
 
+  // ── Firebase Realtime Listener ──
+  // This fires on initial load AND whenever data changes (from any device)
+  paymentsRef.on('value', function(snapshot) {
+    const data = snapshot.val();
+    if (data) {
+      payments = data;
+    }
+    initMissing();
+    renderCal(currentMonth);
+    refreshDash();
+  });
+
   const sel = document.getElementById('monthSelect');
   sel.value = currentMonth;
-  renderCal(currentMonth);
-  refreshDash();
 
-  sel.addEventListener('change', e => {
+  sel.addEventListener('change', function(e) {
     currentMonth = parseInt(e.target.value);
     renderCal(currentMonth);
   });
-
-  window._payments = payments;
 })();
 </script>
 </body>
