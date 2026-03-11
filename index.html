@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4-way · 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;1,9..40,200&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f8f6;
+      --surface: #ffffff;
+      --border: #e8e5e0;
+      --border-strong: #d0ccc5;
+      --text-primary: #1a1714;
+      --text-secondary: #7a756e;
+      --text-tertiary: #b0aa9f;
+      --accent: #1a1714;
+      --lira: #3b5fa0;
+      --jp: #2e8a5c;
+      --jomhar: #b8702a;
+      --eloisa: #b84040;
+      --valid-top: #1a1714;
+      --invalid-bg: #f4f3f1;
+    }
+
+    html { font-size: 18px; }
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 6rem;
+    }
+
+    /* ── header ── */
+    .header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 3.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-title {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+    .logo-text {
+      font-size: 1.05rem;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      color: var(--text-primary);
+    }
+    .logo-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: var(--text-tertiary);
+      letter-spacing: 0.06em;
+    }
+    .contribution-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-strong);
+      border-radius: 2px;
+      padding: 0.2rem 0.6rem;
+      letter-spacing: 0.05em;
+    }
+
+    .month-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .month-label-txt {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    select#monthSelect {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 300;
+      color: var(--text-primary);
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border-strong);
+      outline: none;
+      padding: 0.15rem 1.4rem 0.15rem 0;
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23b0aa9f' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.2rem center;
+    }
+
+    /* ── alert banner ── */
+    #unpaidAlertContainer {
+      margin-bottom: 2.5rem;
+    }
+    .alert-strip {
+      border-left: 2px solid var(--eloisa);
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border-radius: 0 4px 4px 0;
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .alert-strip strong {
+      font-weight: 400;
+      color: var(--text-primary);
+    }
+    .alert-ok {
+      border-left: 2px solid var(--jp);
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border-radius: 0 4px 4px 0;
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+    }
+
+    /* ── dashboard strip ── */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin-bottom: 3rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    @media (max-width: 640px) {
+      .dashboard { grid-template-columns: 1fr; }
+    }
+
+    .dash-pane {
+      padding: 1.5rem 1.75rem;
+    }
+    .dash-pane + .dash-pane {
+      border-left: 1px solid var(--border);
+    }
+    @media (max-width: 640px) {
+      .dash-pane + .dash-pane { border-left: none; border-top: 1px solid var(--border); }
+    }
+
+    .dash-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.6rem;
+    }
+    .dash-date {
+      font-size: 1.6rem;
+      font-weight: 200;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .dash-valid-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-tertiary);
+      margin-bottom: 1rem;
+    }
+    .dash-valid-badge.is-valid { color: var(--jp); }
+
+    .member-today-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.7rem;
+    }
+    .member-today-chip {
+      font-size: 0.72rem;
+      font-weight: 300;
+      padding: 0.2rem 0.7rem;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .member-today-chip.paid { border-color: var(--valid-top); color: var(--text-primary); background: var(--bg); }
+
+    .dash-summary {
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: var(--text-tertiary);
+    }
+    .dash-summary span { color: var(--text-secondary); }
+
+    /* totals pane */
+    .totals-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      height: 100%;
+      align-content: center;
+    }
+    .total-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 0.3rem 0;
+    }
+    .total-item + .total-item { border-left: 1px solid var(--border); padding-left: 1rem; }
+    .total-item:first-child { padding-left: 0; }
+    .total-member-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 0.4rem;
+    }
+    .total-amount {
+      font-size: 1.15rem;
+      font-weight: 200;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+    .total-item.grand .total-amount {
+      font-weight: 400;
+    }
+
+    /* ── calendar ── */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .cal-month-name {
+      font-size: 0.88rem;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+      color: var(--text-secondary);
+    }
+    .cal-hint {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .weekday-hdr {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      text-align: center;
+      padding: 0 0 0.6rem;
+    }
+
+    .day-tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.55rem 0.4rem 0.5rem;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.15s;
+    }
+    .day-tile.day-valid {
+      border-top: 2px solid var(--valid-top);
+    }
+    .day-tile.day-invalid {
+      background: var(--invalid-bg);
+      border-color: transparent;
+      pointer-events: none;
+    }
+    .day-tile.day-today {
+      background: #fdfcfb;
+      box-shadow: inset 0 0 0 1px var(--border-strong);
+    }
+
+    .day-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 300;
+      color: var(--text-tertiary);
+      margin-bottom: 0.45rem;
+    }
+    .day-tile.day-valid .day-num { color: var(--text-primary); }
+    .day-tile.day-today .day-num { font-weight: 400; }
+
+    .checks-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .chk-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 3px 6px 3px 4px;
+      border-radius: 2px;
+      border: 1px solid transparent;
+      transition: all 0.12s;
+      user-select: none;
+    }
+    .chk-label:hover { border-color: var(--border-strong); color: var(--text-secondary); }
+    .chk-label input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .chk-label.checked {
+      color: var(--text-primary);
+      font-weight: 600;
+      border-color: var(--border-strong);
+      background: var(--bg);
+    }
+
+    /* member color dots */
+    .mdot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; display: none; }
+    .chk-label.checked .mdot { display: inline-block; }
+    .mdot-lira { background: var(--lira); }
+    .mdot-jp { background: var(--jp); }
+    .mdot-jomhar { background: var(--jomhar); }
+    .mdot-eloisa { background: var(--eloisa); }
+
+    .invalid-dash {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-tertiary);
+      opacity: 0.4;
+    }
+
+    /* empty cells */
+    .day-empty { background: transparent; border: none; min-height: 90px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- header -->
+  <div class="header">
+    <div class="header-title">
+      <span class="logo-text">Capstone-Paluwagan</span>
+      <span class="logo-sub">2026</span>
+      <span class="contribution-pill">₱20</span>
+    </div>
+    <div class="month-select-wrap">
+      <span class="month-label-txt">month</span>
+      <select id="monthSelect">
+        <option value="0">January</option><option value="1">February</option>
+        <option value="2">March</option><option value="3">April</option>
+        <option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option>
+        <option value="8">September</option><option value="9">October</option>
+        <option value="10">November</option><option value="11">December</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- alert -->
+  <div id="unpaidAlertContainer"></div>
+
+  <!-- dashboard -->
+  <div class="dashboard">
+    <!-- today pane -->
+    <div class="dash-pane">
+      <div class="dash-label">today</div>
+      <div class="dash-date" id="todayDate">—</div>
+      <div class="dash-valid-badge" id="todayValidBadge">—</div>
+      <div class="member-today-row" id="memberTodayRow"></div>
+      <div class="dash-summary" id="dashSummary"></div>
+    </div>
+    <!-- totals pane -->
+    <div class="dash-pane">
+      <div class="dash-label">collected</div>
+      <div class="totals-grid">
+        <div class="total-item">
+          <span class="total-member-label">Lira</span>
+          <span class="total-amount" id="totalLira">₱0</span>
+        </div>
+        <div class="total-item">
+          <span class="total-member-label">JP</span>
+          <span class="total-amount" id="totalJp">₱0</span>
+        </div>
+        <div class="total-item">
+          <span class="total-member-label">Jomhar</span>
+          <span class="total-amount" id="totalJomhar">₱0</span>
+        </div>
+        <div class="total-item">
+          <span class="total-member-label">Eloisa</span>
+          <span class="total-amount" id="totalEloisa">₱0</span>
+        </div>
+        <div class="total-item grand">
+          <span class="total-member-label">total</span>
+          <span class="total-amount" id="grandTotal">₱0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- calendar -->
+  <div>
+    <div class="cal-header">
+      <span class="cal-month-name" id="currentMonthLabel">March 2026</span>
+      <span class="cal-hint">▲ active days &nbsp;·&nbsp; check = paid</span>
+    </div>
+    <div class="cal-grid">
+      <div class="weekday-hdr">sun</div>
+      <div class="weekday-hdr">mon</div>
+      <div class="weekday-hdr">tue</div>
+      <div class="weekday-hdr">wed</div>
+      <div class="weekday-hdr">thu</div>
+      <div class="weekday-hdr">fri</div>
+      <div class="weekday-hdr">sat</div>
+    </div>
+    <div id="monthCalendar" class="cal-grid" style="margin-top:5px;"></div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const MEMBERS  = ['Lira', 'JP', 'Jomhar', 'Eloisa'];
+  const SHORTS   = ['Lira', 'JP', 'Jomhar', 'Eloisa'];
+  const DOTS     = ['mdot-lira','mdot-jp','mdot-jomhar','mdot-eloisa'];
+  const CONTRIBUTION = 20;
+  const VALID_DAYS = [0,2,3,4,6]; // sun, tue, wed, thu, sat
+  const YEAR = 2026;
+  const KEY  = 'rotating2026_v2';
+
+  let payments = {};
+  try { const s = localStorage.getItem(KEY); if (s) payments = JSON.parse(s) || {}; } catch(e){}
+
+  function dk(y, m, d) {
+    return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  function isValid(date) { return VALID_DAYS.includes(date.getDay()); }
+  function save() { localStorage.setItem(KEY, JSON.stringify(payments)); }
+
+  // init missing
+  for (let m = 0; m < 12; m++) {
+    const days = new Date(YEAR, m+1, 0).getDate();
+    for (let d = 1; d <= days; d++) {
+      const dt = new Date(YEAR, m, d);
+      if (isValid(dt)) {
+        const k = dk(YEAR, m, d);
+        if (!Array.isArray(payments[k]) || payments[k].length !== 4)
+          payments[k] = [false,false,false,false];
+      }
+    }
+  }
+  save();
+
+  function totals() {
+    const s = [0,0,0,0]; let all = 0;
+    Object.values(payments).forEach(arr => {
+      if (!Array.isArray(arr)) return;
+      arr.forEach((p,i) => { if (p) { s[i] += CONTRIBUTION; all += CONTRIBUTION; } });
+    });
+    return { s, all };
+  }
+
+  function unpaidAlert() {
+    const today = new Date();
+    if (today.getFullYear() !== YEAR) return `<div class="alert-strip"><strong>—</strong> out of range</div>`;
+    const items = [];
+    for (let m = 0; m <= today.getMonth(); m++) {
+      const max = m === today.getMonth() ? today.getDate() : new Date(YEAR, m+1, 0).getDate();
+      for (let d = 1; d <= max; d++) {
+        const dt = new Date(YEAR, m, d);
+        if (!isValid(dt)) continue;
+        const k = dk(YEAR, m, d);
+        const arr = payments[k];
+        if (!arr) continue;
+        const up = MEMBERS.filter((_,i) => !arr[i]);
+        if (up.length) items.push({ dt, up });
+      }
+    }
+    if (!items.length) return `<div class="alert-ok">all paid up to today</div>`;
+    const recent = items.sort((a,b) => b.dt - a.dt).slice(0,4);
+    const lines = recent.map(({dt, up}) => {
+      const ds = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+      return `<strong>${ds}</strong> — ${up.join(', ')}`;
+    }).join(' &ensp;·&ensp; ');
+    return `<div class="alert-strip" style="margin-bottom:2rem"><strong>Pending</strong> &nbsp; ${lines}</div>`;
+  }
+
+  function refreshDash() {
+    const { s, all } = totals();
+    document.getElementById('totalLira').textContent   = `₱${s[0]}`;
+    document.getElementById('totalJp').textContent     = `₱${s[1]}`;
+    document.getElementById('totalJomhar').textContent = `₱${s[2]}`;
+    document.getElementById('totalEloisa').textContent = `₱${s[3]}`;
+    document.getElementById('grandTotal').textContent  = `₱${all}`;
+
+    const today = new Date();
+    const is26  = today.getFullYear() === YEAR;
+    if (!is26) {
+      document.getElementById('todayDate').textContent = '—';
+      document.getElementById('todayValidBadge').textContent = 'out of range';
+      document.getElementById('memberTodayRow').innerHTML = '';
+      document.getElementById('dashSummary').innerHTML = '';
+    } else {
+      const k = dk(YEAR, today.getMonth(), today.getDate());
+      const validNow = isValid(today);
+      document.getElementById('todayDate').textContent =
+        today.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+
+      const badge = document.getElementById('todayValidBadge');
+      badge.textContent = validNow ? 'collection day' : 'no collection';
+      badge.className   = 'dash-valid-badge' + (validNow ? ' is-valid' : '');
+
+      const arr = (validNow && payments[k]) ? payments[k] : [false,false,false,false];
+      const row = document.getElementById('memberTodayRow');
+      row.innerHTML = '';
+      MEMBERS.forEach((name, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'member-today-chip' + (arr[i] ? ' paid' : '');
+        chip.textContent = name;
+        row.appendChild(chip);
+      });
+
+      const paid   = MEMBERS.filter((_,i) => arr[i]);
+      const unpaid = MEMBERS.filter((_,i) => !arr[i]);
+      const sum    = document.getElementById('dashSummary');
+      if (!validNow) { sum.innerHTML = ''; return; }
+      sum.innerHTML = paid.length
+        ? `<span>${paid.join(', ')}</span> paid · ${unpaid.length ? unpaid.join(', ') + ' pending' : 'everyone in'}`
+        : `Members`;
+    }
+
+    document.getElementById('unpaidAlertContainer').innerHTML = unpaidAlert();
+  }
+
+  let currentMonth;
+  const today = new Date();
+  currentMonth = today.getFullYear() === YEAR ? today.getMonth() : 0;
+
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+  function renderCal(month) {
+    document.getElementById('currentMonthLabel').textContent = `${MONTHS[month]} 2026`;
+    const firstDay = new Date(YEAR, month, 1).getDay();
+    const daysIn   = new Date(YEAR, month+1, 0).getDate();
+    const container = document.getElementById('monthCalendar');
+    container.innerHTML = '';
+
+    for (let i = 0; i < firstDay; i++) {
+      const e = document.createElement('div');
+      e.className = 'day-empty';
+      container.appendChild(e);
+    }
+
+    const todayRef = new Date();
+    const isThisMonth = todayRef.getFullYear() === YEAR && todayRef.getMonth() === month;
+
+    for (let d = 1; d <= daysIn; d++) {
+      const dt    = new Date(YEAR, month, d);
+      const valid = isValid(dt);
+      const k     = dk(YEAR, month, d);
+      if (valid && !payments[k]) payments[k] = [false,false,false,false];
+
+      const tile = document.createElement('div');
+      tile.className = `day-tile ${valid ? 'day-valid' : 'day-invalid'}`;
+      if (isThisMonth && d === todayRef.getDate()) tile.classList.add('day-today');
+
+      const num = document.createElement('div');
+      num.className = 'day-num';
+      num.textContent = d;
+      tile.appendChild(num);
+
+      if (valid) {
+        const row = document.createElement('div');
+        row.className = 'checks-row';
+        MEMBERS.forEach((name, idx) => {
+          const lbl = document.createElement('label');
+          const isPaid = payments[k]?.[idx] || false;
+          lbl.className = `chk-label${isPaid ? ' checked' : ''}`;
+
+          const dot = document.createElement('span');
+          dot.className = `mdot ${DOTS[idx]}`;
+          lbl.appendChild(dot);
+
+          const chk = document.createElement('input');
+          chk.type = 'checkbox';
+          chk.checked = isPaid;
+          chk.addEventListener('change', function() {
+            if (!payments[k]) payments[k] = [false,false,false,false];
+            payments[k][idx] = this.checked;
+            lbl.className = `chk-label${this.checked ? ' checked' : ''}`;
+            save();
+            refreshDash();
+          });
+          lbl.appendChild(chk);
+          lbl.appendChild(document.createTextNode(SHORTS[idx]));
+          row.appendChild(lbl);
+        });
+        tile.appendChild(row);
+      } else {
+        const d2 = document.createElement('span');
+        d2.className = 'invalid-dash';
+        d2.textContent = '—';
+        tile.appendChild(d2);
+      }
+      container.appendChild(tile);
+    }
+  }
+
+  const sel = document.getElementById('monthSelect');
+  sel.value = currentMonth;
+  renderCal(currentMonth);
+  refreshDash();
+
+  sel.addEventListener('change', e => {
+    currentMonth = parseInt(e.target.value);
+    renderCal(currentMonth);
+  });
+
+  window._payments = payments;
+})();
+</script>
+</body>
+</html>
